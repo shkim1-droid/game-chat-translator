@@ -1,0 +1,33 @@
+name: Publish translator update
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'tests/**', 'ci_publish.py', 'build_release.py', 'updater.py', '.github/workflows/publish-translator.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: translator-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate updater and application syntax
+        run: |
+          python -m unittest discover -s tests
+          python -m py_compile src/app.py src/overlay.py launcher.py updater.py build_release.py
+      - name: Build immutable update package
+        run: python ci_publish.py
+      - name: Publish update manifest and package
+        run: |
+          if [ -z "$(git status --porcelain updates/)" ]; then exit 0; fi
+          git config user.name 'translator-release-bot'
+          git config user.email 'translator-release-bot@users.noreply.github.com'
+          git add updates/
+          git commit -m "Publish translator update"
+          git push origin HEAD:main

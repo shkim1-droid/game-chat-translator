@@ -1,0 +1,5 @@
+rapidocr-onnxruntime==1.4.4
+mss==10.0.0
+deep-translator==1.11.4
+numpy>=1.24,<3
+dxcam>=0.0.5,<1; sys_platform == "win32"
